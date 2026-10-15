@@ -1,6 +1,6 @@
 /****************
-Ma sinh vien: 22ITxxx
-Ho ten: Nguyen Van A
+Ma sinh vien: 202418889
+Ho ten: Dang Thi Huong Giang
 Lab 06 ver1 - moi co khung, chua test
 ****************/
 // Tam de Main rong de build duoc, chieu them test sau
