@@ -1,6 +1,6 @@
 /****************
-Ma sinh vien: 202418889
-Ho ten: Dang Thi Huong Giang
+Mã sinh viên: 202418889
+Họ tên: Đặng Thị Hương Giang
 Lab 06 ver1 - moi co khung, chua test
 ****************/
 // Tam de Main rong de build duoc, chieu them test sau
