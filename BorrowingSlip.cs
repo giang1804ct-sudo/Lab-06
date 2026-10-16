@@ -1,6 +1,7 @@
 /****************
 Mã sinh viên: 202418889
 Họ tên: Đặng Thị Hương Giang
+
 ****************/
 // Phiếu mượn, 1 người mượn nhiều thiết bị
 
@@ -25,18 +26,43 @@ public class BorrowingSlip
         BorrowedDate = date;
     }
 
-    // Thêm thiết bị vào phiếu 
-    public void AddDevice(TeachingDevice device, int borrowDays)
+    // Hàm kiểm tra riêng, cho code gọn
+    private void ValidateBorrowing(TeachingDevice device, int borrowDays)
     {
-        
-        device.MarkAsBorrowed();
+        if (device == null)
+            throw new ArgumentException("Device khong duoc null");
 
-        if (items.Count >= Borrower.GetMaximumDevices())
+        // Số ngày phải trong khoảng cho phép
+        if (borrowDays <= 0)
+            throw new InvalidBorrowPeriodException(device.MaThietBi, borrowDays, device.MaxBorrowDays);
+
+        if (borrowDays > device.MaxBorrowDays)
+            throw new InvalidBorrowPeriodException(device.MaThietBi, borrowDays, device.MaxBorrowDays);
+
+        // Check trùng trong phiếu
+        for (int i = 0; i < items.Count; i++)
         {
-            throw new BorrowLimitExceededException(Borrower.BorrowerId, Borrower.GetMaximumDevices());
+            if (items[i].Device.MaThietBi == device.MaThietBi)
+                throw new DuplicateDeviceException("Thiet bi " + device.MaThietBi + " da co trong phieu");
         }
 
+        // Check giới hạn GV 3 / TG 2
+        if (items.Count >= Borrower.GetMaximumDevices())
+            throw new BorrowLimitExceededException(Borrower.BorrowerId, Borrower.GetMaximumDevices());
+
+        // Chỉ Available mới cho mượn
+        if (device.TrangThai != DeviceStatus.Available)
+            throw new DeviceUnavailableException(device.MaThietBi, device.TrangThai);
+    }
+
+    // FIX quan trọng: validate trước, đổi trạng thái sau
+    public void AddDevice(TeachingDevice device, int borrowDays)
+    {
+        // Check hết lỗi trước
+        ValidateBorrowing(device, borrowDays);
+
         BorrowItem it = new BorrowItem(device, BorrowedDate, BorrowedDate.AddDays(borrowDays));
+        device.MarkAsBorrowed(); // đổi trạng thái sau khi check xong
         items.Add(it);
     }
 
@@ -50,7 +76,11 @@ public class BorrowingSlip
                 found = items[i];
         }
         if (found == null)
-            throw new DeviceNotInSlipException("Thiết bị " + deviceId + " không thuộc phiếu");
+            throw new DeviceNotInSlipException("Thiet bi " + deviceId + " khong thuoc phieu");
+
+        // FIX: check trả 2 lần
+        if (found.IsReturned)
+            throw new DeviceAlreadyReturnedException("Thiet bi " + deviceId + " da tra truoc do");
 
         found.Return(returnedDate);
         found.Device.MarkAsAvailable();
@@ -70,7 +100,8 @@ public class BorrowingSlip
             if (items[i].IsReturned)
             {
                 DateTime han = items[i].BorrowedDate.AddDays(items[i].Device.MaxBorrowDays);
-                int tre = (((DateTime)items[i].ReturnedDate) - han).Days;
+                DateTime ngayTra = items[i].ReturnedDate ?? items[i].BorrowedDate;
+                int tre = (ngayTra - han).Days;
                 if (tre > 0)
                     tong = tong + items[i].Device.TinhTienTre(tre);
             }

@@ -1,9 +1,9 @@
 /****************
 Mã sinh viên: 202418889
 Họ tên: Đặng Thị Hương Giang
+
 ****************/
 // Lớp phòng học, giữ danh sách thiết bị
-// TODO: cần xử lý thêm chỗ này...
 
 public class ClassRoom
 {
@@ -19,16 +19,23 @@ public class ClassRoom
         SucChua = sucChua;
     }
 
-    // Thêm thiết bị vào phòng
+    // FIX 1+2: check null + trùng mã
     public void AddDevice(Device device)
     {
-        
+        // Không cho null, tránh crash
+        if (device == null)
+            throw new ArgumentException("Thiet bi khong duoc null");
+
+        // Không cho 2 máy cùng mã
+        if (FindDevice(device.MaThietBi) != null)
+            throw new DuplicateDeviceException("Trung ma thiet bi: " + device.MaThietBi);
+
         ds.Add(device);
     }
 
     public bool RemoveDevice(string deviceId)
     {
-        Device d = FindDevice(deviceId);
+        Device? d = FindDevice(deviceId);
         if (d == null) return false;
         ds.Remove(d);
         return true;
@@ -45,32 +52,27 @@ public class ClassRoom
         return null;
     }
 
-
+    // FIX 3: dùng đa hình, gọi trực tiếp TinhPhiBaoTriNam()
     public decimal CalculateAnnualMaintenanceCost()
     {
         decimal tong = 0;
         for (int i = 0; i < ds.Count; i++)
         {
-            if (ds[i] is ProjectorRemote)
-                tong = tong + ds[i].GiaMua * 0.1m;
-            else if (ds[i] is AirConditionerRemote)
-                tong = tong + ds[i].GiaMua * 0.05m;
-            else if (ds[i] is WirelessMicro)
-                tong = tong + ds[i].GiaMua * 0.15m;
+            // Gọi đa hình, thêm loại mới không phải sửa if-else
+            tong = tong + ds[i].TinhPhiBaoTriNam();
         }
         return tong;
     }
 
-
+    // FIX 4: thêm điều kiện dùng trên 5 năm
     public List<Device> GetDevicesRequiringMaintenance()
     {
         List<Device> kq = new List<Device>();
         for (int i = 0; i < ds.Count; i++)
         {
-            if (ds[i].TrangThai == DeviceStatus.UnderMaintenance)
+            if (ds[i].TrangThai == DeviceStatus.UnderMaintenance || ds[i].SoNamDaDung() > 5)
                 kq.Add(ds[i]);
         }
-        // TODO: thầy bảo cần thêm điều kiện trên 5 năm nữa
         return kq;
     }
 }
